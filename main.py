@@ -1,11 +1,10 @@
 import asyncio
 import uvicorn
-from starlette.middleware.cors import CORSMiddleware
-from fastapi import FastAPI
 from app import create_app
-
+from src.infrastructure.sqlite.database import database
 
 app = create_app()
+database.init_db()
 
 
 async def run() -> None:
