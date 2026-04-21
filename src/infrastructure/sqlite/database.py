@@ -1,13 +1,12 @@
 from contextlib import contextmanager
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine, inspect, text
-from pathlib import Path
 
 from .models.userModel import User
 from .models.baseModel import Base
+from .repositories.db_path import db_path as path
 
-
-db_path = Path(__file__).parent.parent / "sqlite" / "sqlite.db"
+db_path = path
 
 
 class Database:
