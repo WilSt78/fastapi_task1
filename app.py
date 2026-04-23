@@ -12,5 +12,5 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    app.include_router(router, prefix="/v1", tags=["Base APIs"])
+    app.include_router(router, prefix="/v1")
     return app
