@@ -1,37 +1,89 @@
 from sqlalchemy.orm import Session
 from typing import Optional
+import logging
+from fastapi import HTTPException
 from ...infrastructure.sqlite.repositories.users import UserRepository
 from ...schemas.Users import UserRequest, UserResponse
+from ...infrastructure.sqlite.database import database 
+from ...core.exceptions.domain_exceptions import UserNotFoundByIdException, UserNotFoundByUsernameException
+from ...core.exceptions.database_exceptions import UserNotFoundById, UserNotFoundByUsername, UsernameIsOccupied, EmailIsOccupied
+logger = logging.getLogger(__name__)
+
+class GetAllUsersUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(self) -> list[UserResponse]:
+        with self._database.session() as session:
+            users = self._repo.get_all(session)
+            return [UserResponse.model_validate(user) for user in users]
+
+class GetUserByIdUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(self, user_id: int) -> UserResponse:
+        with self._database.session() as session:
+            try:
+                user = self._repo.get_detail(session, user_id)
+                return UserResponse.model_validate(user)
+            except UserNotFoundById:
+                error = UserNotFoundByIdException(id=user_id)
+                logger.error(error.get_detail())
+                raise error
 
 
-class UserUseCase:
-    def __init__(self, db: Session):
-        self.db = db
-        self.repository = UserRepository()
+class GetUserByUsernameUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
 
-    def get_all_users(self) -> list[UserResponse]:
-        users = self.repository.get_all(self.db)
-        return [UserResponse.model_validate(user) for user in users]
+    async def execute(self, username: str) -> UserResponse:
 
-    def get_user_by_id(self, user_id: int) -> UserResponse:
-        user = self.repository.get_detail(self.db, user_id)
-        return UserResponse.model_validate(user)
+        with self._database.session() as session:
+            try:
+                user = self._repo.get_by_username(session, username)
+                return UserResponse.model_validate(user)
+            except UserNotFoundByUsername:
+                error = UserNotFoundByUsernameException(username=username)
+                logger.error(error.get_detail())
+                raise error
 
-    def get_user_by_username(self, username: str) -> Optional[UserResponse]:
-        user = self.repository.get_by_username(self.db, username)
-        if user:
+
+class CreateUserUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(self, user_data: UserRequest) -> UserResponse:
+        with self._database.session() as session:
+            user = self._repo.create(session, user_data)
             return UserResponse.model_validate(user)
-        return None
 
-    def create_user(self, user_data: UserRequest) -> UserResponse:
-        user = self.repository.create(self.db, user_data)
-        return UserResponse.model_validate(user)
 
-    def update_user(self, user_id: int,
+class UpdateUserUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(self, user_id: int,
                     user_data: UserRequest) -> UserResponse:
-        user = self.repository.update(self.db, user_id, user_data)
-        return UserResponse.model_validate(user)
+        with self._database.session() as session:
+            try:
+                user = self._repo.update(session, user_id, user_data)
+                return UserResponse.model_validate(user)
+            except (UsernameIsOccupied,EmailIsOccupied, UserNotFoundById) as e:
+                logger.error(e.get_detail())
+                raise e
 
-    def delete_user(self, user_id: int) -> dict:
-        self.repository.destroy(self.db, user_id)
-        return {"message": "Пользователь успешно удален"}
+class DeleteUserUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(self, user_id: int) -> dict:
+        with self._database.session() as session:
+            self.repository.destroy(session, user_id)
+            return {"message": "Пользователь успешно удален"}

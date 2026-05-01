@@ -1,35 +1,41 @@
 from sqlalchemy.orm import Session
-from fastapi import HTTPException
 from typing import Optional
+import logging
 from ...sqlite.models.userModel import User
 from ....schemas.Users import UserRequest
-
+from ....core.exceptions.database_exceptions import UsernameIsOccupied, EmailIsOccupied, UserNotFoundById, UserNotFoundByUsername
+logger = logging.getLogger(__name__)
 
 class UserRepository:
     def get_all(self, db: Session) -> list[User]:
         return db.query(User).all()
 
     def get_by_username(self, db: Session, username: str) -> Optional[User]:
-        return db.query(User).filter(User.username == username).first()
+        user = db.query(User).filter(User.username == username).first()
+        if not user:
+            e = UserNotFoundByUsername(username=username)
+            logger.error(e.get_detail())
+            raise e
+        return user
 
     def get_detail(self, db: Session, user_id: int) -> User:
         user = db.query(User).filter(User.id == user_id).first()
         if not user:
-            raise HTTPException(
-                status_code=404,
-                detail='Пользователь не найден.')
+            e = UserNotFoundById(id=user_id)
+            logger.error(e.get_detail())
+            raise e
         return user
 
     def create(self, db: Session, user_data: UserRequest) -> User:
         if db.query(User).filter(User.username == user_data.username).first():
-            raise HTTPException(
-                status_code=400,
-                detail='Имя пользователя уже занято.')
+            e=UsernameIsOccupied(user_data.username)
+            logger.error(e.get_detail())
+            raise e
 
         if db.query(User).filter(User.email == user_data.email).first():
-            raise HTTPException(
-                status_code=400,
-                detail='Email уже используется.')
+            e= EmailIsOccupied(user_data.email)
+            logger.error(e.get_detail())
+            raise e
 
         user = User(
             username=user_data.username,
@@ -48,15 +54,15 @@ class UserRepository:
         if user_data.username != user.username:
             if db.query(User).filter(User.username ==
                                      user_data.username).first():
-                raise HTTPException(
-                    status_code=400,
-                    detail='Имя пользователя уже занято.')
+                e=UsernameIsOccupied(user_data.username)
+                logger.error(e.get_detail())
+                raise e
 
         if user_data.email != user.email:
             if db.query(User).filter(User.email == user_data.email).first():
-                raise HTTPException(
-                    status_code=400,
-                    detail='Email уже используется.')
+                e= EmailIsOccupied(user_data.email)
+                logger.error(e.get_detail())
+                raise e
 
         user.username = user_data.username
         user.email = user_data.email

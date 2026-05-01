@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
-from src.routers.base import router
+from src.api.base import router
 
 
 def create_app() -> FastAPI:

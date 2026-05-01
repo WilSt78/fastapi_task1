@@ -1,0 +1,21 @@
+from ..domain.use_cases.users import GetAllUsersUseCase, GetUserByIdUseCase, \
+GetUserByUsernameUseCase, UpdateUserUseCase,\
+DeleteUserUseCase, CreateUserUseCase
+
+def get_all_users_use_case() -> GetAllUsersUseCase:
+    return GetAllUsersUseCase()
+
+def get_user_by_id_use_case() -> GetUserByIdUseCase:
+    return GetUserByIdUseCase()
+
+def get_user_by_username_use_case() -> GetUserByUsernameUseCase:
+    return GetUserByUsernameUseCase()
+
+def update_user_use_case() -> UpdateUserUseCase:
+    return UpdateUserUseCase()
+
+def delete_user_use_case() -> DeleteUserUseCase:
+    return DeleteUserUseCase()
+
+def create_user_use_case() -> CreateUserUseCase:
+    return CreateUserUseCase()
