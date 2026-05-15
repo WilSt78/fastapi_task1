@@ -8,7 +8,8 @@ from ..domain.use_cases.users import (
     GetUserByIdUseCase, 
     CreateUserUseCase,
     UpdateUserUseCase,
-    DeleteUserUseCase
+    DeleteUserUseCase,
+    AlreadyOccupied
 )
 from .depends import (
     get_all_users_use_case, 
@@ -40,7 +41,7 @@ async def register_user(
 ) -> UserResponse:
     try:
         return await use_case.execute(user_data)
-    except Exception as e:
+    except AlreadyOccupied as e:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=e.get_detail())
 
 

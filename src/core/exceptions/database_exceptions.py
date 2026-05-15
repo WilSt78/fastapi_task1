@@ -1,4 +1,4 @@
-class BaseDatabaseException(Exception):
+class BaseDatabaseException(BaseException):
     def __init__(self, detail: str) -> None:
         self._detail = detail
 
@@ -16,6 +16,13 @@ class UsernameIsOccupied(BaseDatabaseException):
 
     def __init__(self, username):
         self._detail = self._detail.format(username=username)
+
+class AlreadyExists(BaseException):
+    _detail = "Пользователь с такими данными существует"
+
+    def get_detail(self) -> str:
+        return self._detail
+    
 
 class UserNotFoundById(BaseDatabaseException):
     _detail = 'Пользователь с id : {id} не найден'

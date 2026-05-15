@@ -1,4 +1,4 @@
-class BaseDomainException(Exception):
+class BaseDomainException(BaseException):
     def __init__(self, detail: str) -> None:
         self._detail = detail
 
@@ -16,3 +16,9 @@ class UserNotFoundByUsernameException(BaseDomainException):
     
     def __init__(self, username):
         self._detail = self._detail.format(username=username)
+
+
+class AlreadyOccupied(BaseDomainException):
+    _detail = 'Пользователь с такими данными уже существует'
+    def __init__(self):
+        pass

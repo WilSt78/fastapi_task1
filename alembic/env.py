@@ -10,7 +10,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from src.infrastructure.sqlite.models.baseModel import Base
-from src.infrastructure.sqlite.models import * #noqa
+from src.infrastructure.sqlite.models.postModel import Post #noqa
+from src.infrastructure.sqlite.models.userModel import User #noqa
+from src.infrastructure.sqlite.models.locationModel import Location #noqa
+from src.infrastructure.sqlite.models.commentModel import Comment #noqa
+from src.infrastructure.sqlite.models.categoryModel import Category #noqa
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config

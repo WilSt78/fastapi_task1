@@ -5,8 +5,8 @@ from fastapi import HTTPException
 from ...infrastructure.sqlite.repositories.users import UserRepository
 from ...schemas.Users import UserRequest, UserResponse
 from ...infrastructure.sqlite.database import database 
-from ...core.exceptions.domain_exceptions import UserNotFoundByIdException, UserNotFoundByUsernameException
-from ...core.exceptions.database_exceptions import UserNotFoundById, UserNotFoundByUsername, UsernameIsOccupied, EmailIsOccupied
+from ...core.exceptions.domain_exceptions import UserNotFoundByIdException, UserNotFoundByUsernameException, AlreadyOccupied
+from ...core.exceptions.database_exceptions import UserNotFoundById, UserNotFoundByUsername, UsernameIsOccupied, EmailIsOccupied, AlreadyExists
 logger = logging.getLogger(__name__)
 
 class GetAllUsersUseCase:
@@ -59,8 +59,14 @@ class CreateUserUseCase:
 
     async def execute(self, user_data: UserRequest) -> UserResponse:
         with self._database.session() as session:
-            user = self._repo.create(session, user_data)
-            return UserResponse.model_validate(user)
+            try:
+                user = self._repo.create(session, user_data)
+                return UserResponse.model_validate(user)
+            except AlreadyExists as e:
+                logger.error(e)
+                raise AlreadyOccupied
+
+                
 
 
 class UpdateUserUseCase:
