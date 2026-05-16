@@ -1,6 +1,8 @@
 from ..domain.use_cases.users import GetAllUsersUseCase, GetUserByIdUseCase, \
 GetUserByUsernameUseCase, UpdateUserUseCase,\
 DeleteUserUseCase, CreateUserUseCase
+from ..domain.use_cases.auth import AuthenticateUserUseCase, CreateAccessTokenUseCase
+
 
 def get_all_users_use_case() -> GetAllUsersUseCase:
     return GetAllUsersUseCase()
@@ -19,3 +21,9 @@ def delete_user_use_case() -> DeleteUserUseCase:
 
 def create_user_use_case() -> CreateUserUseCase:
     return CreateUserUseCase()
+
+def authenticate_user_use_case() -> AuthenticateUserUseCase:
+    return AuthenticateUserUseCase()
+
+def create_token_use_case() -> CreateAccessTokenUseCase:
+    return CreateAccessTokenUseCase()

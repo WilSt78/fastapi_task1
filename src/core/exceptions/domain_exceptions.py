@@ -22,3 +22,6 @@ class AlreadyOccupied(BaseDomainException):
     _detail = 'Пользователь с такими данными уже существует'
     def __init__(self):
         pass
+
+class PasswordsDoesntMatch(BaseDomainException):
+    _detail = 'Неверный пароль'

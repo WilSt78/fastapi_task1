@@ -4,6 +4,7 @@ import logging
 from sqlalchemy.exc import IntegrityError
 from ...sqlite.models.userModel import User
 from ....schemas.Users import UserRequest
+from ....functions.verify_password import get_password_hash
 from ....core.exceptions.database_exceptions import UsernameIsOccupied, EmailIsOccupied, UserNotFoundById, UserNotFoundByUsername, AlreadyExists
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class UserRepository:
             user = User(
             username=user_data.username,
             email=user_data.email,
-            password=user_data.password
+            password=get_password_hash(user_data.password)
             )
             db.add(user)
             db.flush()

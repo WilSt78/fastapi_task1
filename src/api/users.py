@@ -1,5 +1,5 @@
 from fastapi import status, HTTPException, APIRouter, Depends
-from typing import List, Optional
+from typing import List
 
 from ..schemas.Users import UserResponse, UserRequest
 from ..domain.use_cases.users import (

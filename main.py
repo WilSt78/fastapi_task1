@@ -16,5 +16,4 @@ async def run() -> None:
     await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run())
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
