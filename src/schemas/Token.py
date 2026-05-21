@@ -1,6 +1,6 @@
-from pydantic import Field, BaseModel
+from pydantic import BaseModel
 
 
 class Token(BaseModel):
-    access_token: str = Field()
-    token_type: str = Field()
+    access_token: str 
+    token_type: str

@@ -1,5 +1,7 @@
 from datetime import datetime, timedelta, timezone
-from jose import jwt
+from jose import jwt, JWTError
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import Depends, HTTPException, status
 
 from ...functions.verify_password import verify_password
 from ...settings import TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM
@@ -7,8 +9,9 @@ from ...infrastructure.sqlite.database import database
 from src.infrastructure.sqlite.repositories.users import UserRepository
 from src.schemas.Users import UserResponse
 from ...core.exceptions.database_exceptions import UserNotFoundByUsername
-from ...core.exceptions.domain_exceptions import UserNotFoundByUsernameException, PasswordsDoesntMatch
+from ...core.exceptions.domain_exceptions import UserNotFoundByUsernameException, PasswordsDoesntMatch, InvalidTokenException
 
+security = HTTPBearer()
 
 class CreateAccessTokenUseCase:
     def execute(
@@ -46,3 +49,36 @@ class AuthenticateUserUseCase:
             if not verify_password(password, user_model.password):
                 return UserResponse.model_validate(user_model)
             raise PasswordsDoesntMatch
+
+class GetCurrentUserUseCase:
+    
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+    
+    def execute(self, token: str) -> UserResponse:
+        if token.startswith("Bearer "):
+            token = token.replace("Bearer ", "")
+        
+        try:
+            payload = jwt.decode(
+                token,
+                SECRET_KEY.get_secret_value(),
+                algorithms=[ALGORITHM]
+            )
+        except JWTError:
+            raise InvalidTokenException()
+        
+        username = payload.get("sub")
+        if not username:
+            raise InvalidTokenException()
+        
+        with self._database.session() as session:
+            try:
+                user = self._repo.get_by_username(session, username)
+            except UserNotFoundByUsername:
+                raise UserNotFoundByUsernameException(username)
+        
+            return UserResponse.model_validate(user)
+
+

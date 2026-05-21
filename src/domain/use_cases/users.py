@@ -91,5 +91,5 @@ class DeleteUserUseCase:
 
     async def execute(self, user_id: int) -> dict:
         with self._database.session() as session:
-            self.repository.destroy(session, user_id)
+            self._repo.destroy(session, user_id)
             return {"message": "Пользователь успешно удален"}
