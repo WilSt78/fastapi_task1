@@ -3,6 +3,7 @@ from typing import List
 
 from ..functions.get_current_user import get_current_user
 from ..schemas.Users import UserResponse, UserRequest
+from ..core.exceptions.domain_exceptions import AlreadyOccupied
 from ..domain.use_cases.users import (
     GetAllUsersUseCase, 
     GetUserByUsernameUseCase, 
@@ -10,7 +11,6 @@ from ..domain.use_cases.users import (
     CreateUserUseCase,
     UpdateUserUseCase,
     DeleteUserUseCase,
-    AlreadyOccupied
 )
 from .depends import (
     get_all_users_use_case, 

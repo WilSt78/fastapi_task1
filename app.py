@@ -5,7 +5,7 @@ from src.api.auth import router as auth_router
 
 
 def create_app() -> FastAPI:
-    app = FastAPI(root_path="/")
+    app = FastAPI(root_path="/", docs_url='/docs',redoc_url='/redoc')
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],

@@ -7,14 +7,13 @@ from src.schemas.Users import UserResponse
 
 security = HTTPBearer()
 
-
-def get_current_user(
+async def get_current_user( 
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> UserResponse:
     use_case = GetCurrentUserUseCase()
     
     try:
-        user = use_case.execute(credentials.credentials)
+        user = await use_case.execute(credentials.credentials)  
         return user
     except (InvalidTokenException, UserNotFoundByUsernameException) as e:
         raise HTTPException(

@@ -4,7 +4,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi import Depends, HTTPException, status
 
 from ...functions.verify_password import verify_password
-from ...settings import TOKEN_EXPIRE_TIME, SECRET_KEY, ALGORITHM
+from ...config import settings
 from ...infrastructure.sqlite.database import database 
 from src.infrastructure.sqlite.repositories.users import UserRepository
 from src.schemas.Users import UserResponse
@@ -15,56 +15,55 @@ security = HTTPBearer()
 
 class CreateAccessTokenUseCase:
     def execute(
-            self, nickname: str,
-            expires_delta: timedelta | None = None
-        ) -> str:
+        self, 
+        nickname: str,
+        expires_delta: timedelta | None = None
+    ) -> str:
         to_encode = {"sub": nickname}
         if expires_delta:
             expire = datetime.now(timezone.utc) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=TOKEN_EXPIRE_TIME)
+            expire = datetime.now(timezone.utc) + timedelta(minutes=settings.TOKEN_EXPIRE_TIME)
 
         to_encode["exp"] = expire
         encoded_jwt = jwt.encode(
             to_encode,
-            key=SECRET_KEY.get_secret_value(),
-            algorithm=ALGORITHM,
+            key=settings.SECRET_KEY.get_secret_value(),
+            algorithm=settings.ALGORITHM,
         )
-
         return encoded_jwt
-
-
+    
 class AuthenticateUserUseCase:
     def __init__(self) -> None:
         self._repo = UserRepository()
         self._database = database
 
-    def execute(self, username: str, password: str) -> UserResponse:
-        with self._database.session() as session:
+    async def execute(self, username: str, password: str) -> UserResponse: 
+        async with self._database.session() as session:  
             try:
-                user_model = self._repo.get_by_username(session, username) 
+                user_model = await self._repo.get_by_username(session, username) 
             except UserNotFoundByUsername:
                 raise UserNotFoundByUsernameException(username)
             
-            if not verify_password(password, user_model.password):
+            if verify_password(password, user_model.password):
                 return UserResponse.model_validate(user_model)
-            raise PasswordsDoesntMatch
-
+            raise PasswordsDoesntMatch()
+        
 class GetCurrentUserUseCase:
     
     def __init__(self):
         self._database = database
         self._repo = UserRepository()
     
-    def execute(self, token: str) -> UserResponse:
+    async def execute(self, token: str) -> UserResponse: 
         if token.startswith("Bearer "):
             token = token.replace("Bearer ", "")
         
         try:
             payload = jwt.decode(
                 token,
-                SECRET_KEY.get_secret_value(),
-                algorithms=[ALGORITHM]
+                settings.SECRET_KEY.get_secret_value(),
+                algorithms=[settings.ALGORITHM]
             )
         except JWTError:
             raise InvalidTokenException()
@@ -73,12 +72,10 @@ class GetCurrentUserUseCase:
         if not username:
             raise InvalidTokenException()
         
-        with self._database.session() as session:
+        async with self._database.session() as session: 
             try:
-                user = self._repo.get_by_username(session, username)
+                user = await self._repo.get_by_username(session, username) 
             except UserNotFoundByUsername:
                 raise UserNotFoundByUsernameException(username)
         
             return UserResponse.model_validate(user)
-
-

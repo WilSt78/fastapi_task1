@@ -24,8 +24,9 @@ class AlreadyOccupied(BaseDomainException):
         pass
 
 class PasswordsDoesntMatch(BaseDomainException):
-    _detail = 'Неверный пароль'
+    def __init__(self):
+        self._detail = 'Неверный пароль'
 
 class InvalidTokenException(BaseDomainException):
     def __init__(self):
-        self.detail = "Invalid or expired token"
+        self.detail = "Неверный токен"

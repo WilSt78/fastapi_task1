@@ -4,7 +4,11 @@ sqlalchemy
 alembic
 pydantic
 pydantic[email]
+pydantic_settings
 passlib
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
+argon2_cffi
+aiosqlite
+sqlalchemy[asyncio]
