@@ -1,19 +1,19 @@
-from .Base import Base
-from .Locations import Location
-from .Users import UserRequest
-from .Categories import Category
 from pydantic import Field
-from datetime import date, datetime
-from typing import Optional
+
+from .base import Base
 
 
-TEXT_LENGTH = 256
+class PostRequest(Base):
+    title: str = Field(max_length=200)
+    text: str = Field(max_length=2000)
+    location_name: str | None = None
+    category_name: str | None = None
 
 
-class Post(Base):
-    title: str = Field(max_length=TEXT_LENGTH)
+class PostResponse(Base):
+    id: int
+    title: str
     text: str
-    pub_date: date = Field(default_factory=datetime.now)
-    location: Optional[Location] = None
-    author: UserRequest
-    category: Optional[Category] = None
+    author_id: int
+    location_name: str | None = None
+    category_name: str | None = None

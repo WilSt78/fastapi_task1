@@ -1,32 +1,138 @@
-from ..domain.use_cases.users import GetAllUsersUseCase, GetUserByIdUseCase, \
-GetUserByUsernameUseCase, UpdateUserUseCase,\
-DeleteUserUseCase, CreateUserUseCase
-from ..domain.use_cases.auth import AuthenticateUserUseCase, CreateAccessTokenUseCase, GetCurrentUserUseCase
+from src.domain.use_cases.auth import (
+    AuthenticateUseCase,
+    CreateAccessTokenUseCase,
+)
+
+from src.domain.use_cases.categories import (
+    CreateCategoryUseCase,
+    DeleteCategoryUseCase,
+    GetAllCategoriesUseCase,
+    GetCategoryByIdUseCase,
+)
+from src.domain.use_cases.comments import (
+    CreateCommentUseCase,
+    DeleteCommentUseCase,
+    GetAllCommentsUseCase,
+    GetCommentByIdUseCase,
+    GetCommentsByPostUseCase,
+)
+from src.domain.use_cases.locations import (
+    CreateLocationUseCase,
+    DeleteLocationUseCase,
+    GetAllLocationsUseCase,
+    GetLocationByIdUseCase,
+)
+from src.domain.use_cases.posts import (
+    CreatePostUseCase,
+    DeletePostUseCase,
+    GetAllPostsUseCase,
+    GetPostByIdUseCase,
+    UpdatePostUseCase,
+)
+from src.domain.use_cases.users import (
+    CreateUserUseCase,
+    DeleteUserUseCase,
+    GetAllUsersUseCase,
+    GetUserByIdUseCase,
+    UpdateUserUseCase,
+)
 
 
-def get_all_users_use_case() -> GetAllUsersUseCase:
-    return GetAllUsersUseCase()
-
-def get_user_by_id_use_case() -> GetUserByIdUseCase:
+async def get_user_by_id_use_case() -> GetUserByIdUseCase:
     return GetUserByIdUseCase()
 
-def get_user_by_username_use_case() -> GetUserByUsernameUseCase:
-    return GetUserByUsernameUseCase()
 
-def update_user_use_case() -> UpdateUserUseCase:
-    return UpdateUserUseCase()
+async def get_all_users_use_case() -> GetAllUsersUseCase:
+    return GetAllUsersUseCase()
 
-def delete_user_use_case() -> DeleteUserUseCase:
-    return DeleteUserUseCase()
 
-def create_user_use_case() -> CreateUserUseCase:
+async def create_user_use_case() -> CreateUserUseCase:
     return CreateUserUseCase()
 
-def authenticate_user_use_case() -> AuthenticateUserUseCase:
-    return AuthenticateUserUseCase()
 
-def create_token_use_case() -> CreateAccessTokenUseCase:
+async def update_user_use_case() -> UpdateUserUseCase:
+    return UpdateUserUseCase()
+
+
+async def delete_user_use_case() -> DeleteUserUseCase:
+    return DeleteUserUseCase()
+
+
+async def delete_location_use_case() -> DeleteLocationUseCase:
+    return DeleteLocationUseCase()
+
+
+async def create_location_use_case() -> CreateLocationUseCase:
+    return CreateLocationUseCase()
+
+
+async def get_all_locations_use_case() -> GetAllLocationsUseCase:
+    return GetAllLocationsUseCase()
+
+
+async def get_location_by_id_use_case() -> GetLocationByIdUseCase:
+    return GetLocationByIdUseCase()
+
+
+def authenticate_user_use_case() -> AuthenticateUseCase:
+    return AuthenticateUseCase()
+
+
+def create_access_token_use_case() -> CreateAccessTokenUseCase:
     return CreateAccessTokenUseCase()
 
-def get_current_user_use_case() -> GetCurrentUserUseCase:
-    return GetCurrentUserUseCase()
+
+async def get_all_categories_use_case() -> GetAllCategoriesUseCase:
+    return GetAllCategoriesUseCase()
+
+
+async def get_category_by_id_use_case() -> GetCategoryByIdUseCase:
+    return GetCategoryByIdUseCase()
+
+
+async def create_category_use_case() -> CreateCategoryUseCase:
+    return CreateCategoryUseCase()
+
+
+async def delete_category_use_case() -> DeleteCategoryUseCase:
+    return DeleteCategoryUseCase()
+
+
+async def get_all_posts_use_case() -> GetAllPostsUseCase:
+    return GetAllPostsUseCase()
+
+
+async def get_post_by_id_use_case() -> GetPostByIdUseCase:
+    return GetPostByIdUseCase()
+
+
+async def create_post_use_case() -> CreatePostUseCase:
+    return CreatePostUseCase()
+
+
+async def update_post_use_case() -> UpdatePostUseCase:
+    return UpdatePostUseCase()
+
+
+async def delete_post_use_case() -> DeletePostUseCase:
+    return DeletePostUseCase()
+
+
+async def get_all_comments_use_case() -> GetAllCommentsUseCase:
+    return GetAllCommentsUseCase()
+
+
+async def get_comment_by_id_use_case() -> GetCommentByIdUseCase:
+    return GetCommentByIdUseCase()
+
+
+async def get_comments_by_post_use_case() -> GetCommentsByPostUseCase:
+    return GetCommentsByPostUseCase()
+
+
+async def create_comment_use_case() -> CreateCommentUseCase:
+    return CreateCommentUseCase()
+
+
+async def delete_comment_use_case() -> DeleteCommentUseCase:
+    return DeleteCommentUseCase()

@@ -1,11 +1,10 @@
-from pydantic import BaseModel, Field
-from datetime import date
+from datetime import datetime
 
-
-TEXT_LENGTH = 256
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class Base(BaseModel):
-    is_published: bool = Field(default=True,
-                               description="Опубликовано")
-    created_at: date = Field(description="Добавлено")
+    model_config = ConfigDict(from_attributes=True)
+
+    published: bool = Field(default=True)
+    created: datetime = Field(default_factory=datetime.now)

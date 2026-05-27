@@ -1,57 +1,17 @@
-from sqlalchemy.orm import Session
-from typing import Optional
 import logging
-from fastapi import HTTPException
-from ...infrastructure.sqlite.repositories.users import UserRepository
-from ...schemas.Users import UserRequest, UserResponse
-from ...infrastructure.sqlite.database import database 
-from ...core.exceptions.domain_exceptions import UserNotFoundByIdException, UserNotFoundByUsernameException, AlreadyOccupied
-from ...core.exceptions.database_exceptions import UserNotFoundById, UserNotFoundByUsername, UsernameIsOccupied, EmailIsOccupied, AlreadyExists
+
+from src.core.exceptions.database_exceptions import UserAlreadyExists
+from src.core.exceptions.domain_exceptions import (
+    UsernameIsOccupiedException,
+)
+from src.infrastructure.database import database
+from src.infrastructure.repositories.users import (
+    UserRepository,
+)
+from src.resources.auth import get_password_hash
+from src.schemas.users import LoginUserResponse, RegisterUserRequest
 
 logger = logging.getLogger(__name__)
-
-
-class GetAllUsersUseCase:
-    def __init__(self):
-        self._database = database
-        self._repo = UserRepository()
-
-    async def execute(self) -> list[UserResponse]:
-        async with self._database.session() as session: 
-            users = await self._repo.get_all(session) 
-            return [UserResponse.model_validate(user) for user in users]
-
-
-class GetUserByIdUseCase:
-    def __init__(self):
-        self._database = database
-        self._repo = UserRepository()
-
-    async def execute(self, user_id: int) -> UserResponse:
-        async with self._database.session() as session: 
-            try:
-                user = await self._repo.get_detail(session, user_id) 
-                return UserResponse.model_validate(user)
-            except UserNotFoundById:
-                error = UserNotFoundByIdException(id=user_id)
-                logger.error(error.get_detail())
-                raise error
-
-
-class GetUserByUsernameUseCase:
-    def __init__(self):
-        self._database = database
-        self._repo = UserRepository()
-
-    async def execute(self, username: str) -> UserResponse:
-        async with self._database.session() as session:  
-            try:
-                user = await self._repo.get_by_username(session, username) 
-                return UserResponse.model_validate(user)
-            except UserNotFoundByUsername:
-                error = UserNotFoundByUsernameException(username=username)
-                logger.error(error.get_detail())
-                raise error
 
 
 class CreateUserUseCase:
@@ -59,29 +19,38 @@ class CreateUserUseCase:
         self._database = database
         self._repo = UserRepository()
 
-    async def execute(self, user_data: UserRequest) -> UserResponse:
+    async def execute(
+        self, user: RegisterUserRequest
+    ) -> LoginUserResponse:
+        user.password = get_password_hash(password=user.password)
         async with self._database.session() as session:
             try:
-                user = await self._repo.create(session, user_data) 
-                return UserResponse.model_validate(user)
-            except AlreadyExists as e:
-                logger.error(e)
-                raise AlreadyOccupied
+                user1 = await self._repo.create(session, user)
+            except UserAlreadyExists as err:
+                error = UsernameIsOccupiedException(
+                    username=user.username
+                )
+                logger.error(error.detail)
+                raise error from err
+            return LoginUserResponse.model_validate(obj=user1)
 
 
-class UpdateUserUseCase:
-    def __init__(self):
-        self._database = database
-        self._repo = UserRepository()
+import logging
 
-    async def execute(self, user_id: int, user_data: UserRequest) -> UserResponse:
-        async with self._database.session() as session:  
-            try:
-                user = await self._repo.update(session, user_id, user_data)
-                return UserResponse.model_validate(user)
-            except (UsernameIsOccupied, EmailIsOccupied, UserNotFoundById) as e:
-                logger.error(e.get_detail())
-                raise e
+from src.core.exceptions.database_exceptions import UserNotFound
+from src.core.exceptions.domain_exceptions import (
+    PermissionDeniedException,
+    UserNotFoundByUsernameException,
+    WrongPasswordException,
+)
+from src.infrastructure.database import database
+from src.infrastructure.repositories.users import (
+    UserRepository,
+)
+from src.resources.auth import verify_password
+from src.schemas.users import LoginUserResponse
+
+logger = logging.getLogger(__name__)
 
 
 class DeleteUserUseCase:
@@ -89,7 +58,181 @@ class DeleteUserUseCase:
         self._database = database
         self._repo = UserRepository()
 
-    async def execute(self, user_id: int) -> dict:
-        async with self._database.session() as session: 
-            await self._repo.destroy(session, user_id)  
-            return {"message": "Пользователь успешно удален"}
+    async def execute(
+        self,
+        username: str,
+        cur_user: LoginUserResponse,
+        password: str,
+    ) -> None:
+        async with self._database.session() as session:
+            try:
+                user = await self._repo.get_by_username(
+                    session, username
+                )
+            except UserNotFound as exc:
+                error = UserNotFoundByUsernameException(
+                    username=username
+                )
+                logger.error(error.detail)
+                raise error from exc
+            if cur_user.is_admin:
+                await self._repo.delete(session, user.id)
+                return
+            if cur_user.username != username:
+                error = PermissionDeniedException()
+                logger.error(error.detail)
+                raise error
+            if not verify_password(password, user.password):
+                error = WrongPasswordException()
+                logger.error(error.detail)
+                raise error
+
+            await self._repo.delete(session, user.id)
+
+
+from src.infrastructure.database import database
+from src.infrastructure.repositories.users import (
+    UserRepository,
+)
+from src.schemas.users import LoginUserResponse
+
+
+class GetAllUsersUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(self) -> list[LoginUserResponse]:
+        async with self._database.session() as session:
+            users = await self._repo.get_all(session=session)
+            return [
+                LoginUserResponse.model_validate(obj=user)
+                for user in users
+            ]
+
+
+import logging
+
+from src.core.exceptions.database_exceptions import UserNotFound
+from src.core.exceptions.domain_exceptions import (
+    UserNotFoundByIdException,
+)
+from src.infrastructure.database import database
+from src.infrastructure.repositories.users import (
+    UserRepository,
+)
+from src.schemas.users import LoginUserResponse
+
+logger = logging.getLogger(__name__)
+
+
+class GetUserByIdUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(
+        self, user_id: int, cur_user: LoginUserResponse
+    ) -> LoginUserResponse:
+        async with self._database.session() as session:
+            try:
+                user = await self._repo.get_by_id(session, user_id)
+                return LoginUserResponse.model_validate(user)
+            except UserNotFound as err:
+                error = UserNotFoundByIdException(id=user_id)
+                logger.error(
+                    f"Пользователь {cur_user.username} произвел ошибку: {error.detail}"
+                )
+                raise error from err
+
+
+import logging
+
+from src.core.exceptions.domain_exceptions import (
+    PermissionDeniedException,
+    UsernameIsOccupiedException,
+    UserNotFoundByUsernameException,
+    WrongPasswordException,
+)
+from src.domain.use_cases.auth import (
+    CreateAccessTokenUseCase,
+)
+from src.infrastructure.database import database
+from src.infrastructure.repositories.users import (
+    UserRepository,
+)
+from src.resources.auth import get_password_hash, verify_password
+from src.schemas.users import (
+    LoginUserResponse,
+    UpdateUserRequest,
+    UpdateUserResponse,
+)
+
+logger = logging.getLogger(__name__)
+
+
+class UpdateUserUseCase:
+    def __init__(self):
+        self._database = database
+        self._repo = UserRepository()
+        self._token_use_case = CreateAccessTokenUseCase()
+
+    async def execute(
+        self,
+        username: str,
+        user_data: UpdateUserRequest,
+        current_user: LoginUserResponse,
+    ) -> UpdateUserResponse:
+        async with self._database.session() as session:
+            user = await self._repo.get_by_username(session, username)
+            if not user:
+                error = UserNotFoundByUsernameException(
+                    username=username
+                )
+                logger.error(error.detail)
+                raise error
+
+            if current_user.username != username:
+                error = PermissionDeniedException()
+                logger.error(error.detail)
+                raise error
+
+            if not verify_password(
+                user_data.current_password, user.password
+            ):
+                error = WrongPasswordException()
+                logger.error(error.detail)
+                raise error
+
+            if (
+                user_data.new_username
+                and user_data.new_username != user.username
+            ):
+                existing = await self._repo.get_by_username(
+                    session, user_data.new_username
+                )
+                if existing:
+                    error = UsernameIsOccupiedException(
+                        username=user_data.new_username
+                    )
+                    logger.error(error.detail)
+                    raise error
+                user.username = user_data.new_username
+
+            if user_data.new_password:
+                user.password = get_password_hash(
+                    user_data.new_password
+                )
+
+            await session.commit()
+            await session.refresh(user)
+
+            new_token = await self._token_use_case.execute(
+                username=user.username
+            )
+
+            return UpdateUserResponse(
+                user=LoginUserResponse.model_validate(user),
+                access_token=new_token,
+                token_type="bearer",
+            )

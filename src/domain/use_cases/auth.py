@@ -1,81 +1,71 @@
-from datetime import datetime, timedelta, timezone
-from jose import jwt, JWTError
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi import Depends, HTTPException, status
+import logging
 
-from ...functions.verify_password import verify_password
-from ...config import settings
-from ...infrastructure.sqlite.database import database 
-from src.infrastructure.sqlite.repositories.users import UserRepository
-from src.schemas.Users import UserResponse
-from ...core.exceptions.database_exceptions import UserNotFoundByUsername
-from ...core.exceptions.domain_exceptions import UserNotFoundByUsernameException, PasswordsDoesntMatch, InvalidTokenException
+from src.core.exceptions.domain_exceptions import (
+    UserNotFoundByUsernameException,
+    WrongPasswordException,
+)
+from src.infrastructure.database import database
+from src.infrastructure.repositories.users import (
+    UserRepository,
+)
+from src.resources.auth import verify_password
+from src.schemas.users import LoginUserResponse
+from datetime import UTC, datetime, timedelta
 
-security = HTTPBearer()
+from jose import jwt
+
+from src.services.auth import AUTH_ALGORITHM, SECRET_AUTH_KEY
+
+logger = logging.getLogger(__name__)
+
+
+class AuthenticateUseCase:
+    def __init__(self) -> None:
+        self._database = database
+        self._repo = UserRepository()
+
+    async def execute(
+        self, username: str, password: str
+    ) -> LoginUserResponse:
+
+        async with self._database.session() as session:
+            user = await self._repo.get_by_username(session, username)
+
+            if not user:
+                error = UserNotFoundByUsernameException(
+                    username=username
+                )
+                logger.error(str(error))
+                raise error
+
+            if not verify_password(password, user.password):
+                error = WrongPasswordException()
+                logger.error(str(error))
+                raise error
+
+            return LoginUserResponse.model_validate(user)
+
 
 class CreateAccessTokenUseCase:
-    def execute(
-        self, 
-        nickname: str,
-        expires_delta: timedelta | None = None
+    def __init__(self, token_expire_minutes: int = 10) -> None:
+        self._ACCESS_TOKEN_EXPIRE_MINUTES = token_expire_minutes
+
+    async def execute(
+        self, username: str, expires_delta: timedelta | None = None
     ) -> str:
-        to_encode = {"sub": nickname}
+        to_encode = {"sub": username}
         if expires_delta:
-            expire = datetime.now(timezone.utc) + expires_delta
+            expire = datetime.now(UTC) + expires_delta
         else:
-            expire = datetime.now(timezone.utc) + timedelta(minutes=settings.TOKEN_EXPIRE_TIME)
-
-        to_encode["exp"] = expire
-        encoded_jwt = jwt.encode(
-            to_encode,
-            key=settings.SECRET_KEY.get_secret_value(),
-            algorithm=settings.ALGORITHM,
-        )
-        return encoded_jwt
-    
-class AuthenticateUserUseCase:
-    def __init__(self) -> None:
-        self._repo = UserRepository()
-        self._database = database
-
-    async def execute(self, username: str, password: str) -> UserResponse: 
-        async with self._database.session() as session:  
-            try:
-                user_model = await self._repo.get_by_username(session, username) 
-            except UserNotFoundByUsername:
-                raise UserNotFoundByUsernameException(username)
-            
-            if verify_password(password, user_model.password):
-                return UserResponse.model_validate(user_model)
-            raise PasswordsDoesntMatch()
-        
-class GetCurrentUserUseCase:
-    
-    def __init__(self):
-        self._database = database
-        self._repo = UserRepository()
-    
-    async def execute(self, token: str) -> UserResponse: 
-        if token.startswith("Bearer "):
-            token = token.replace("Bearer ", "")
-        
-        try:
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY.get_secret_value(),
-                algorithms=[settings.ALGORITHM]
+            expire = datetime.now(UTC) + timedelta(
+                minutes=self._ACCESS_TOKEN_EXPIRE_MINUTES
             )
-        except JWTError:
-            raise InvalidTokenException()
-        
-        username = payload.get("sub")
-        if not username:
-            raise InvalidTokenException()
-        
-        async with self._database.session() as session: 
-            try:
-                user = await self._repo.get_by_username(session, username) 
-            except UserNotFoundByUsername:
-                raise UserNotFoundByUsernameException(username)
-        
-            return UserResponse.model_validate(user)
+
+        to_encode.update({"exp": expire})
+        encoded_jwt = jwt.encode(
+            claims=to_encode,
+            key=SECRET_AUTH_KEY.get_secret_value(),
+            algorithm=AUTH_ALGORITHM,
+        )
+
+        return encoded_jwt

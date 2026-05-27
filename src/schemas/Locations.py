@@ -1,10 +1,8 @@
-from .Base import Base
 from pydantic import Field
 
-
-TEXT_LENGTH = 256
+from .base import Base
 
 
 class Location(Base):
-    name: str = Field(max_length=TEXT_LENGTH,
-                      description="Название места")
+    id: int
+    name: str = Field(max_length=200)

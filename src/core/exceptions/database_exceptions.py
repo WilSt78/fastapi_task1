@@ -1,40 +1,36 @@
-class BaseDatabaseException(BaseException):
-    def __init__(self, detail: str) -> None:
+class BaseDatabaseException(Exception):
+    def __init__(self, detail: str | None = None) -> None:
         self._detail = detail
-
-    def get_detail(self) -> str:
-        return self._detail
-
-class EmailIsOccupied(BaseDatabaseException):
-    _detail = 'Пользователь с email : {email} уже существует'
-
-    def __init__(self, email):
-        self._detail = self._detail.format(email=email)
-
-class UsernameIsOccupied(BaseDatabaseException):
-    _detail = 'Пользователь с username : {username} уже существует'
-
-    def __init__(self, username):
-        self._detail = self._detail.format(username=username)
-
-class AlreadyExists(BaseException):
-    _detail = "Пользователь с такими данными существует"
-
-    def get_detail(self) -> str:
-        return self._detail
-    
-
-class UserNotFoundById(BaseDatabaseException):
-    _detail = 'Пользователь с id : {id} не найден'
-
-    def __init__(self, id):
-        self._detail = self._detail.format(id=id)
+        super().__init__(detail)
 
 
-class UserNotFoundByUsername(BaseDatabaseException):
-    _detail = 'Пользователь с username : {username} не найден'
-
-    def __init__(self, username):
-        self._detail = self._detail.format(username=username)
+class UserNotFound(BaseDatabaseException):
+    pass
 
 
+class UserAlreadyExists(BaseDatabaseException):
+    pass
+
+
+class LocationAlreadyExists(BaseDatabaseException):
+    pass
+
+
+class LocationNotFound(BaseDatabaseException):
+    pass
+
+
+class CategoryNotFound(BaseDatabaseException):
+    pass
+
+
+class CategoryAlreadyExists(BaseDatabaseException):
+    pass
+
+
+class PostNotFound(BaseDatabaseException):
+    pass
+
+
+class CommentNotFound(BaseDatabaseException):
+    pass

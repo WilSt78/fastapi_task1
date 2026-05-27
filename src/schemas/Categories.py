@@ -1,12 +1,10 @@
-from .Base import Base
 from pydantic import Field
 
-
-TEXT_LENGTH = 256
+from .base import Base
 
 
 class Category(Base):
-    title: str = Field(max_length=TEXT_LENGTH,
-                       description="Заголовок")
-    description: str = Field(description="Описание")
-    slug: str
+    id: int
+    title: str = Field(max_length=200)
+    description: str | None = Field(default=None, max_length=500)
+    slug: str = Field(default=None, max_length=200)

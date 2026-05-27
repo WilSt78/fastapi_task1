@@ -1,15 +1,24 @@
-FROM python:3.14-slim
+FROM python:3.11-slim
 
-WORKDIR /app
+# Устанавливаем рабочую директорию
+WORKDIR /task_2
 
-# 1. Сначала копируем только requirements.txt
+# Копируем зависимости
 COPY requirements.txt .
 
-# 2. Устанавливаем зависимости (этот слой будет кэшироваться)
+# Устанавливаем системные зависимости (для asyncpg)
+RUN apt-get update && \
+    apt-get install -y gcc libpq-dev && \
+    rm -rf /var/lib/apt/lists/*
+
+# Устанавливаем Python‑зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 3. Теперь копируем весь код
+# Копируем код приложения
 COPY . .
 
-# 4. Запуск
+# Открываем портфс
+EXPOSE 8000
+
+# Команда запуска
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
