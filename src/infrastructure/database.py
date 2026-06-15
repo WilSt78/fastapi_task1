@@ -9,7 +9,6 @@ Base = declarative_base()
 
 class Database:
     def __init__(self):
-        # Проверяем, что settings имеет атрибут postgres_url
         if not hasattr(settings, 'postgres_url'):
             raise AttributeError("Settings object has no 'postgres_url' attribute")
         
@@ -26,7 +25,6 @@ class Database:
         )
     
     async def init_db(self):
-        """Создаёт все таблицы (не рекомендуется для production)"""
         async with self._engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
     
@@ -41,7 +39,6 @@ class Database:
                 raise
 
 
-# Создаём глобальный экземпляр
 database = Database()
 
 

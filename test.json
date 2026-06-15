@@ -1,0 +1,327 @@
+{
+  "info": {
+    "_postman_id": "fastapi_8_tests_final",
+    "name": "FastAPI Blogicum - 8 Core Tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "username",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "password",
+      "value": "TestPass123!",
+      "type": "string"
+    },
+    {
+      "key": "postId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "01_Register User",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "const timestamp = Date.now();",
+              "pm.collectionVariables.set('username', `user_${timestamp}`);"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(201);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"username\": \"{{username}}\",\n    \"password\": \"{{password}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/users",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "users"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "02_Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(200);",
+              "});",
+              "if (pm.response.code === 200) {",
+              "    const json = pm.response.json();",
+              "    pm.collectionVariables.set('token', json.access_token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "username",
+              "value": "{{username}}",
+              "type": "text"
+            },
+            {
+              "key": "password",
+              "value": "{{password}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/auth/token",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "auth", "token"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "03_Get Current User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/users/me",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "users", "me"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "04_Get All Posts",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/posts",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "posts"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "05_Create Post",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 201\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(201);",
+              "});",
+              "if (pm.response.code === 201) {",
+              "    const json = pm.response.json();",
+              "    if (json.id) pm.collectionVariables.set('postId', json.id);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"Test Post {{$timestamp}}\",\n    \"text\": \"This is a test post content\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/posts",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "posts"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "06_Get Post By ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/v1/posts/{{postId}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "posts", "{{postId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "07_Update Post",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 200\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(200);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"title\": \"Updated Post Title\",\n    \"text\": \"This content has been updated\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/api/v1/posts/{{postId}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "posts", "{{postId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "08_Delete Post",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status is 204\", function() {",
+              "    pm.expect(pm.response.code).to.be.eql(204);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/api/v1/posts/{{postId}}",
+          "host": ["{{base_url}}"],
+          "path": ["api", "v1", "posts", "{{postId}}"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

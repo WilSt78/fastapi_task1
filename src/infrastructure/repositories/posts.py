@@ -112,5 +112,5 @@ class PostRepository:
         self, session: AsyncSession, post_id: int
     ) -> None:
         post = await self.get_by_id(session, post_id)
-        session.delete(post)
+        await session.delete(post)
         await session.flush()
